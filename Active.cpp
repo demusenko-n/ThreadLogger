@@ -4,7 +4,7 @@ active_object::Active::Message::~Message() = default;
 void active_object::Active::Message::Execute()
 {}
 
-active_object::Active::Active(): thd_(std::make_unique<thread>(&Run))
+active_object::Active::Active() : thd_(std::make_unique<thread>([this]() {Run(); }))
 {}
 
 active_object::Active::~Active()
@@ -22,7 +22,7 @@ void active_object::Active::Send(unique_ptr<Message> m)
 {
 	if (m != nullptr)
 	{
-		mq_.push(m);
+		mq_.push(std::move(m));
 	}
 }
 
