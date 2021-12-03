@@ -5,6 +5,12 @@
 
 namespace active_object
 {
+	//I'm not sure if it's okay to do so, because
+	//if I write lines below, after that in any file I can do following:
+	// using active_object::unique_lock
+	// using active_object::shared_lock
+	// etc.
+
 	using std::unique_lock;
 	using std::shared_lock;
 	using std::shared_mutex;
@@ -135,7 +141,7 @@ namespace active_object
 		{
 			cv_enq_.wait(l);
 		}
-			
+
 		queue_.pop();
 	}
 
