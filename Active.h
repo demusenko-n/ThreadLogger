@@ -1,16 +1,17 @@
 ﻿#pragma once
 #include <memory>
-#include <iostream>
-#include <string>
 #include <thread>
-#include <mutex>
-#include <shared_mutex>
 #include <queue>
 
 #include "QueueThreadSafe.h"
 
 namespace active_object
 {
+	//I'm not sure if it's okay to do so, because
+	//if I write lines below, after that in any file I can do following:
+	// using active_object::unique_ptr
+	// using active_object::queue
+	// etc.
 	using std::unique_ptr;
 	using std::queue;
 	using std::thread;
@@ -23,7 +24,7 @@ namespace active_object
 		{
 		public:
 			virtual ~Message();
-			virtual void Execute();
+			virtual void Execute() = 0;
 		};
 
 		Active();
@@ -41,7 +42,6 @@ namespace active_object
 		unique_ptr<thread> thd_;
 
 		void Run();
-
 		void Interrupt();
 	};
 }
