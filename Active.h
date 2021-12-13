@@ -7,41 +7,69 @@
 
 namespace active_object
 {
-	//I'm not sure if it's okay to do so, because
-	//if I write lines below, after that in any file I can do following:
-	// using active_object::unique_ptr
-	// using active_object::queue
-	// etc.
-	using std::unique_ptr;
 	using std::queue;
 	using std::thread;
 
+	template <typename T>
+	concept Executable = requires(T c) {
+		c.Execute();
+		{c.IsStopMessage()} -> std::same_as<bool>;
+		{T::GetStopMessage() } -> std::convertible_to<const T&>;
+	};
 
+
+
+	template<Executable T>
 	class Active
 	{
 	public:
-		class Message
+
+		Active() : thd_([this]() {Run(); })
+		{}
+
+		~Active() {
+			try
+			{
+				Interrupt();
+				thd_.join();
+			}
+			catch (...)
+			{
+			}
+		}
+
+		template<Executable U>
+		void Send(U&& m)
 		{
-		public:
-			virtual ~Message();
-			virtual void Execute() = 0;
-		};
+			if (!m.IsStopMessage())
+			{
+				mq_.push(std::forward<U>(m));
+			}
+		}
 
-		Active();
-
-		~Active();
-
-		void Send(unique_ptr<Message> m);
-
-		//Active(Active&& other) = delete;
-		//Active(const Active& other) = delete;
 		Active& operator= (const Active& other) = delete;
 		Active& operator= (Active&& other) = delete;
 	private:
-		QueueThreadSafe<unique_ptr<Message>> mq_;
-		unique_ptr<thread> thd_;
+		QueueThreadSafe<T> mq_;
+		thread thd_;
 
-		void Run();
-		void Interrupt();
+		void Run() {
+
+			while (true)
+			{
+				T msg = mq_.dequeue();
+				if (msg.IsStopMessage())
+				{
+					break;
+				}
+				msg.Execute();
+			}
+		}
+
+		void Interrupt()
+		{
+			mq_.push(T::GetStopMessage());
+		}
+
 	};
 }

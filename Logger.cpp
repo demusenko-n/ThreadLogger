@@ -17,8 +17,18 @@ void logger::LoggerIndentManager::Log(const std::string& file, const std::string
 	logger::LoggerInternal::GetLogger().Log(file, function, line, message, indent_count_);
 }
 
-logger::LoggerInternal::LogMessage::LogMessage(std::string s): msg_(std::move(s))
+logger::LoggerInternal::LogMessage::LogMessage(std::string s): msg_(std::move(s)), is_final_msg_(false)
 {}
+
+bool logger::LoggerInternal::LogMessage::IsStopMessage() {
+	return is_final_msg_;
+}
+
+const logger::LoggerInternal::LogMessage& logger::LoggerInternal::LogMessage::GetStopMessage()
+{
+	static LogMessage msg_final;
+	return msg_final;
+}
 
 void logger::LoggerInternal::LogMessage::Execute()
 {

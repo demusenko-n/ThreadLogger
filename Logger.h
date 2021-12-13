@@ -4,11 +4,6 @@
 
 #define LOG(STR) logger::LoggerIndentManager lgr; lgr.Log(__FILE__, __FUNCTION__, __LINE__, STR)
 namespace logger {
-
-	//I'm not sure if it's okay to do so, because
-	//if I write lines below, after that in any file that does #include "Logger.h" I can do following:
-	// using logger::Active
-
 	using active_object::Active;
 
 
@@ -18,7 +13,7 @@ namespace logger {
 		LoggerIndentManager();
 
 		~LoggerIndentManager();
-		
+
 		void Log(const std::string& file, const std::string& function, int line, const std::string& message);
 	private:
 		static int thread_local indent_count_;
@@ -26,12 +21,17 @@ namespace logger {
 
 	class LoggerInternal
 	{
-		class LogMessage final : public Active::Message
+		class LogMessage final
 		{
 			std::string msg_;
+			bool is_final_msg_;
+			LogMessage() : is_final_msg_(true)
+			{}
 		public:
 			LogMessage(std::string s);
-			void Execute() override;
+			static const LogMessage& GetStopMessage();
+			bool IsStopMessage();
+			void Execute();
 		};
 
 	public:
@@ -47,9 +47,9 @@ namespace logger {
 			message_stream << std::string(level, '\t') << "tid [" << std::hex << std::this_thread::get_id() << "] [" << " " << "] ["
 				<< file << '|' << function << ':' << std::dec << line << "] " << message;
 
-			logger_bg_.Send(std::make_unique<LogMessage>(message_stream.str()));
+			logger_bg_.Send(LogMessage(message_stream.str()));
 		}
 	private:
-		Active logger_bg_;
+		Active<LogMessage> logger_bg_;
 	};
 }

@@ -33,4 +33,5 @@ int main()
 		LOG("main thread after pause");
 	}
 	std::jthread thr2(myFunc);
+	
 }
