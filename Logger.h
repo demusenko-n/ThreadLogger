@@ -28,7 +28,8 @@ namespace logger {
 			LogMessage() : is_final_msg_(true)
 			{}
 		public:
-			LogMessage(std::string s);
+			LogMessage(std::string&& s);
+			LogMessage(const std::string& s);
 			static const LogMessage& GetStopMessage();
 			bool IsStopMessage();
 			void Execute();

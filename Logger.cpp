@@ -2,7 +2,8 @@
 #include <chrono>
 #include <iostream>
 
-namespace logger {
+namespace logger
+{
 	LoggerIndentManager::LoggerIndentManager()
 	{
 		++indent_count_;
@@ -18,10 +19,14 @@ namespace logger {
 		logger::LoggerInternal::GetLogger().Log(file, function, line, message, indent_count_);
 	}
 
-	LoggerInternal::LogMessage::LogMessage(std::string s) : msg_(std::move(s)), is_final_msg_(false)
+	LoggerInternal::LogMessage::LogMessage(std::string&& s) : msg_(std::move(s)), is_final_msg_(false)
 	{}
 
-	bool LoggerInternal::LogMessage::IsStopMessage() {
+	LoggerInternal::LogMessage::LogMessage(const std::string& s) : msg_(s), is_final_msg_(false)
+	{}
+
+	bool LoggerInternal::LogMessage::IsStopMessage() 
+	{
 		return is_final_msg_;
 	}
 
@@ -40,5 +45,4 @@ namespace logger {
 	}
 
 	int thread_local LoggerIndentManager::indent_count_ = -1;
-
 }
