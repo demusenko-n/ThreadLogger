@@ -47,6 +47,8 @@ namespace active_object
 			}
 		}
 
+		Active(const Active& other) = delete;
+		Active(Active&& other) = delete;
 		Active& operator= (const Active& other) = delete;
 		Active& operator= (Active&& other) = delete;
 	private:
