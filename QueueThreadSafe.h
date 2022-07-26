@@ -11,7 +11,7 @@ namespace active_object
 	using std::queue;
 	using std::condition_variable_any;
 
-	template<class Message>
+	template<class T>
 	class QueueThreadSafe
 	{
 	public:
@@ -23,13 +23,13 @@ namespace active_object
 		template<class... Ts>
 		void emplace(Ts&&... args);
 
-		[[nodiscard]] const Message& front()const;
+		[[nodiscard]] const T& front()const;
 
-		[[nodiscard]] const Message& back()const;
+		[[nodiscard]] const T& back()const;
 
-		Message& front();
+		T& front();
 
-		Message& back();
+		T& back();
 
 		[[nodiscard]] bool empty()const;
 
@@ -37,20 +37,21 @@ namespace active_object
 
 		void pop();
 
-		[[nodiscard]] Message dequeue();
+		[[nodiscard]] T dequeue();
 
 	private:
-		queue<Message> queue_;
+		queue<T> queue_;
 		mutable shared_mutex mutex_;
 		mutable condition_variable_any cv_enq_;
+		mutable std::condition_variable cv;
 	};
 
-	template <class Message>
-	QueueThreadSafe<Message>::QueueThreadSafe() = default;
+	template <class T>
+	QueueThreadSafe<T>::QueueThreadSafe() = default;
 
-	template <class Message>
+	template <class T>
 	template <class U>
-	void QueueThreadSafe<Message>::push(U&& obj)
+	void QueueThreadSafe<T>::push(U&& obj)
 	{
 		unique_lock l(mutex_);
 		queue_.push(std::forward<U>(obj));
@@ -58,9 +59,9 @@ namespace active_object
 		cv_enq_.notify_one();
 	}
 
-	template <class Message>
+	template <class T>
 	template <class ... Ts>
-	void QueueThreadSafe<Message>::emplace(Ts&&... args)
+	void QueueThreadSafe<T>::emplace(Ts&&... args)
 	{
 		unique_lock l(mutex_);
 		queue_.emplace(std::forward<Ts>(args)...);
@@ -68,54 +69,54 @@ namespace active_object
 		cv_enq_.notify_one();
 	}
 
-	template <class Message>
-	const Message& QueueThreadSafe<Message>::front() const
+	template <class T>
+	const T& QueueThreadSafe<T>::front() const
 	{
 		shared_lock l(mutex_);
 		cv_enq_.wait(l, [this] { return !queue_.empty(); });
 		return queue_.front();
 	}
 
-	template <class Message>
-	const Message& QueueThreadSafe<Message>::back() const
+	template <class T>
+	const T& QueueThreadSafe<T>::back() const
 	{
 		shared_lock l(mutex_);
 		cv_enq_.wait(l, [this] { return !queue_.empty(); });
 		return queue_.back();
 	}
 
-	template <class Message>
-	Message& QueueThreadSafe<Message>::front()
+	template <class T>
+	T& QueueThreadSafe<T>::front()
 	{
 		shared_lock l(mutex_);
 		cv_enq_.wait(l, [this] { return !queue_.empty(); });
 		return queue_.front();
 	}
 
-	template <class Message>
-	Message& QueueThreadSafe<Message>::back()
+	template <class T>
+	T& QueueThreadSafe<T>::back()
 	{
 		shared_lock l(mutex_);
 		cv_enq_.wait(l, [this] { return !queue_.empty(); });
 		return queue_.back();
 	}
 
-	template <class Message>
-	bool QueueThreadSafe<Message>::empty() const
+	template <class T>
+	bool QueueThreadSafe<T>::empty() const
 	{
 		shared_lock l(mutex_);
 		return queue_.empty();
 	}
 
-	template <class Message>
-	size_t QueueThreadSafe<Message>::size() const
+	template <class T>
+	size_t QueueThreadSafe<T>::size() const
 	{
 		shared_lock l(mutex_);
 		return queue_.size();
 	}
 
-	template <class Message>
-	void QueueThreadSafe<Message>::pop()
+	template <class T>
+	void QueueThreadSafe<T>::pop()
 	{
 		unique_lock l(mutex_);
 
@@ -124,12 +125,12 @@ namespace active_object
 		queue_.pop();
 	}
 
-	template <class Message>
-	Message QueueThreadSafe<Message>::dequeue()
+	template <class T>
+	T QueueThreadSafe<T>::dequeue()
 	{
 		unique_lock l(mutex_);
 		cv_enq_.wait(l, [this] { return !queue_.empty(); });
-		Message res = std::move(queue_.front());
+		T res = std::move(queue_.front());
 		queue_.pop();
 		return res;
 	}
